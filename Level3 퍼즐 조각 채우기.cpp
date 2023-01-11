@@ -2,15 +2,15 @@
 #include <vector>
 using namespace std;
 
-static int PM[4][2] = {{0,1},{0,-1},{1,0},{-1,0}}; 
-
 typedef vector<vector<int>> VVI;
 typedef vector<int> VI;
+typedef vector<bool> VB;
+typedef vector<vector<bool>> VVB;
 
 #define MIN(a,b) a > b ? b : a
 #define MAX(a,b) a > b ? a : b
 
-int MP[4][2] = {{-1,0},{0,-1},{1,0},{0,1}};
+const int MP[4][2] = {{-1,0},{0,-1},{1,0},{0,1}};
 int OVER[2]= {-1,50};
 void dfs2 (bool tf, int y, int x, VI &square, VVI & board){
     board[y][x] = !tf;
@@ -25,12 +25,20 @@ void dfs2 (bool tf, int y, int x, VI &square, VVI & board){
         }
     }
 }
-void rot(vector<vector<bool>> & board){
-    vector<vector<bool>> temp(board[0].size(),vector<bool>(board.size()));
+
+VVB rot(VVB & board){
+    VVB temp(board[0].size(),VB(board.size()));
     for(int i = 0; i <temp.size(); i++)
         for(int j = 0; j <temp[0].size(); j++)
             temp[i][j] = board[board.size()-j-1][i];
-    board = temp;
+    return temp;
+}
+bool comp(const VVB & table, const VVB & board){
+    if(table.size() != board.size() || table[0].size() != board[0].size()) return false;
+    for(int i = 0; i < table.size(); i++)
+        for(int j = 0; j < table[i].size(); j++)
+            if(!(table[i][j]^board[i][j])) return false;
+    return true;
 }
 int solution(vector<vector<int>> game_board, vector<vector<int>> table) {
     int answer = -1;
@@ -66,32 +74,15 @@ int solution(vector<vector<int>> game_board, vector<vector<int>> table) {
             }
         }
     int sum = 0;
-    bool tf = false;
     vector<bool> tfB(B.size(), false);
-    for(int i = 0; i < T.size(); i++){
-        for(int j = 0; j < B.size(); j++){
-            if(tfB[j]) continue;
-            for(int a = 0; a < 4; a++){
-                rot(T[i]);
-                if(T[i].size() == B[j].size() && T[i][0].size() == B[j][0].size()){
-                    tf = true;
-                    for(int y = 0; y < T[i].size(); y++){
-                        for(int x = 0; x < T[i][0].size(); x++)
-                            if(T[i][y][x] + B[j][y][x] != 1){
-                                tf = false;
-                                break;
-                            }
-                        if(!tf) break;
-                    }
-                    if(tf){
-                        sum += score[i];
-                        tfB[j]= true;
-                        j = B.size();
-                        break;
-                    }
+    for(int i = 0; i < T.size(); i++)
+        for(int j = 0; j < B.size(); j++)
+            for(int a = 0; a < 4 && !tfB[j]; a++)
+                if(comp(T[i] = rot(T[i]),B[j])){
+                    sum += score[i];
+                    tfB[j]= true;
+                    j = B.size();
+                    break;
                 }
-            }
-        }
-    }
     return sum;
 }
